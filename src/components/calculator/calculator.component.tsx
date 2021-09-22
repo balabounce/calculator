@@ -4,20 +4,36 @@ import './calculator.style.scss';
 const Calculator: React.FC  = () => {
     const [storyText, setStoryText] = useState('');
     const [bodyText, setBodyText] = useState('0');
-    let tempText = '';
+
+    const toCalc = () => {
+        let expression = bodyText.split(/(-|\+|\*|\/)/g);
+        if(expression.indexOf('') !== -1 && expression[1] !== '-') {
+            return false;
+        }
+        expression = expression.filter(str => str !== '');
+        expression.forEach(word =>  console.log(/\d/g.test(word)));
+        console.log(expression);
+    }
 
     const toScreen = (text: string): void => {
-        let str = bodyText + text;
-        if(bodyText === '0' && text !== '+' && text !== '-' && text !== '*' && text !== '/' && text !== '.' ) {
+        let tempText = bodyText + text;
+        if(bodyText === '0' && text !== '.' ) {
             setBodyText(text);
-            str = bodyText;
+            tempText = text;
         }
-        // let test = str.match(/^([0.]|[1-9])+/g);
-        let test = /^0\.1/.test(str);
-        // let newStr = str.match(/0\./g);
-        console.log(str,test);
+        tempText = tempText.replace(/\.\.+/g, '.');
+        tempText = tempText.replace(/\/\/+/g, '/');
+        tempText = tempText.replace(/\*\*+/g, '*');
+        tempText = tempText.replace(/--+/g, '-');
+        tempText = tempText.replace(/\+\++/g, '+');
+        tempText = tempText.replace(/(-|\+|\*|\/)(-|\+|\*|\/)+/g, '$2');
+        tempText = tempText.replace(/\.(-|\+|\*|\/)/g, '.0$1');
+        tempText = tempText.replace(/(-|\+|\*|\/)\./g, '$1');
+        tempText = tempText.replace(/(\.[0-9]+)\./g, '$1');
+        const test =/[0-9]*.?/g.test(tempText); 
+        // console.log(tempText, test);
         if(test) {
-            setBodyText(str);
+            setBodyText(tempText);
         }
     }
 
@@ -35,7 +51,7 @@ const Calculator: React.FC  = () => {
             setBodyText('0');
         } else {
             setStoryText(bodyText);
-            console.log('calc');
+            toCalc();
         }
     }
 
