@@ -5,14 +5,91 @@ const Calculator: React.FC  = () => {
     const [storyText, setStoryText] = useState('');
     const [bodyText, setBodyText] = useState('0');
 
+    const multAndDiv = (operation: string, array: (string | number)[]): (string | number)[] => {
+        const index = array.indexOf(operation);
+        const a = array[index-1] as number;
+        const b = array[index+1] as number;
+        let result: number = 0;
+        if(operation === '/') {
+            result = a/b;
+        } 
+        if(operation === '*') {
+            result = a*b;
+        }
+        if(operation === '+') {
+            result = a+b;
+        }
+        if(operation === '-') {
+            result = a-b;
+        }
+        array.splice(index-1,3, result);
+        return array
+    }
+
     const toCalc = () => {
-        let expression = bodyText.split(/(-|\+|\*|\/)/g);
+        let expression = bodyText.split(/(-|\+|\*|\/)/g) as (string|number)[];
         if(expression.indexOf('') !== -1 && expression[1] !== '-') {
-            return false;
+            if(expression[expression.indexOf('')-1] === '*') {
+                const index = expression.indexOf('');
+                console.log(expression);
+                const neg = -expression[index+2];
+                expression.splice(index, 2, `${neg}`);
+            } else {
+                return false;
+            }
         }
         expression = expression.filter(str => str !== '');
-        expression.forEach(word =>  console.log(/\d/g.test(word)));
-        console.log(expression);
+        if(expression[0] === '-') {
+            expression[1] = `-${expression[1]}`;
+            expression = expression.slice(1);
+        }
+        expression = expression.map(word => {
+            if(/\d/.test(`${+word}`)) {
+                return +word;
+            } else {
+                return word;
+            }
+        });
+        
+        let result: (number|string)[];
+
+        while(expression.indexOf('*') !== -1 || expression.indexOf('/') !== -1 || expression.indexOf('+') !== -1 || expression.indexOf('-') !== -1) {
+            if(expression.indexOf('*') !== -1 && expression.indexOf('/') !== -1) {
+                if(expression.indexOf('*') < expression.indexOf('/')) {
+                    result =  multAndDiv('*', expression);
+                } else {
+                    result =  multAndDiv('/', expression);
+                }
+                expression = result;
+            }
+    
+            if(expression.indexOf('*') !== -1 ) {
+                expression = multAndDiv('*', expression);
+            }
+    
+            if(expression.indexOf('/') !== -1 ) {
+                expression = multAndDiv('/', expression);
+            }
+    
+            if(expression.indexOf('+') !== -1 && expression.indexOf('-') !== -1 ) {
+                if(expression.indexOf('+') < expression.indexOf('-')) {
+                    result =  multAndDiv('+', expression);
+                } else {
+                    result =  multAndDiv('-', expression);
+                }
+                expression = result;
+            }
+    
+            if(expression.indexOf('+') !== -1 ) {
+                expression = multAndDiv('+', expression);
+            }
+    
+            if(expression.indexOf('-') !== -1 ) {
+                expression = multAndDiv('-', expression);
+            }
+        }
+       
+        setBodyText(`${expression[0]}`);
     }
 
     const toScreen = (text: string): void => {
@@ -26,13 +103,12 @@ const Calculator: React.FC  = () => {
         tempText = tempText.replace(/\*\*+/g, '*');
         tempText = tempText.replace(/--+/g, '-');
         tempText = tempText.replace(/\+\++/g, '+');
-        tempText = tempText.replace(/(-|\+|\*|\/)(-|\+|\*|\/)+/g, '$2');
+        tempText = tempText.replace(/(-|\+|\*|\/)(\+|\*|\/)+/g, '$2');
         tempText = tempText.replace(/\.(-|\+|\*|\/)/g, '.0$1');
         tempText = tempText.replace(/(-|\+|\*|\/)\./g, '$1');
         tempText = tempText.replace(/(\.[0-9]+)\./g, '$1');
         const test =/[0-9]*.?/g.test(tempText); 
-        // console.log(tempText, test);
-        if(test) {
+        if(test && bodyText.length <= 22) {
             setBodyText(tempText);
         }
     }
@@ -50,7 +126,6 @@ const Calculator: React.FC  = () => {
             setStoryText('');
             setBodyText('0');
         } else {
-            setStoryText(bodyText);
             toCalc();
         }
     }
